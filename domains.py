@@ -71,6 +71,8 @@ deities = driver.find_elements_by_xpath("//table/tbody/tr/td[1]")
 deities = [x.text for x in deities]
 
 offset = 2
+# Nyarlatothep is a bad bad man, so he requires a special case just for himself
+nyarlatothep_count = 0
 
 total_combinations = 0
 for i in range(len(deities)):
@@ -82,11 +84,26 @@ for i in range(len(deities)):
     deity_side = driver.find_elements_by_xpath("//table/tbody/tr/td/span/b")
     deity_side = [x.text for x in deity_side]
 
-    if "Domains" in deity_side:
-        idx = deity_side.index("Domains")
+    # Had to hardcode in some strings for Nyarlathotep who decided to be a pain in the ass
+    if "Domains" in deity_side or "Domains (Black Pharaoh)" in deity_side:
+        try:
+            idx = deity_side.index("Domains")
+        except:
+            if "Domains (Black Pharaoh)" in deity_side:
+                if(nyarlatothep_count == 0):
+                    idx = deity_side.index("Domains (Black Pharaoh)")
+                    nyarlatothep_count += 1
+                elif(nyarlatothep_count == 1):
+                    idx = deity_side.index("Domains (Haunter of the Dark)")
+                else:
+                    idx = deity_side.index("Domains (Faceless Sphinx)")
+
         deity_elems = driver.find_elements_by_xpath(
-            f"//table/tbody/tr/td/span/a")
+            "//table/tbody/tr/td/span/a")
         deity_dmns = [x.text for x in deity_elems if valid_domain(x.text)]
+        if "Domains (Black Pharaoh)" in deity_side:
+            deity_dmns = deity_dmns[(
+                (nyarlatothep_count-1)*4):nyarlatothep_count*4]
         deity_subs = []
         dmn_string = ""
         for domain in deity_dmns:
@@ -115,7 +132,7 @@ for i in range(len(deities)):
 
         worksheet.write(f"D{i+offset}", num_combinations)
         total_combinations += num_combinations
-        print(f"Total combinations currently: {total_combinations}")
+        print(f"Total combinations currently: {int(total_combinations)}")
 
     else:
         next
